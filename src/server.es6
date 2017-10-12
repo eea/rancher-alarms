@@ -80,6 +80,7 @@ import assert from 'assert';
       }
 
       if (!find(monitoredServices, {id: s.id})) {
+        s.environmentId = s.stackId;
         if (!s.environmentId) {
           // some services doesn't have `environmentId` property. we will skip these so far (I suppose those are internal Rancher services)
           trace(`service id=${s.id} name=${s.name} has no environmentId property, skipping... data=${JSON.stringify(s, null, 4)}`);
