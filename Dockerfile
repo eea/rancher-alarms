@@ -1,5 +1,7 @@
 FROM mhart/alpine-node:4
 
+RUN apk add --no-cache tzdata
+
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
