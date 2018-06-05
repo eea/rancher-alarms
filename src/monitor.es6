@@ -182,7 +182,8 @@ export default class ServiceStateMonitor {
       if (this.service.launchConfig && this.service.launchConfig.healthCheck) {
         const containers = await this._rancher.getServiceContainers(this.service.id);
 
-        const hasUnhealthyContainers = _(this._withoutSidekicks(containers))
+        const hasUnhealthyContainers = containers
+          .filter((c) => c.healthState)       
           .filter((c) => c.state === 'running')
           .some((c) => (c.healthState !== 'healthy'));
 
