@@ -45,6 +45,10 @@ import assert from 'assert';
 
   async function initServiceMonitor(service) {
     const {name, environmentId} = service;
+    if ( ! stacksById.hasOwnProperty(environmentId) ) {
+      info(`Stack id ${environmentId} not found in stack list, cannot init `);
+      return null;
+    }
     const serviceFullName =  stacksById[environmentId].toLowerCase() + '/' + name.toLowerCase();
 
     const targets = extend({}, config.notifications['*'] && config.notifications['*'].targets, config.notifications[serviceFullName] && config.notifications[serviceFullName].targets);
@@ -64,6 +68,7 @@ import assert from 'assert';
       targets,
       templates: config.templates || {}
     });
+    
   }
 
   async function updateMonitors() {
@@ -80,7 +85,11 @@ import assert from 'assert';
       }
 
       if (!find(monitoredServices, {id: s.id})) {
-        s.environmentId = s.stackId;
+        
+        if ( typeof s.environmentId == 'undefined' ||  ! s.environmentId ) {
+            s.environmentId = s.stackId;
+            }
+        
         if (!s.environmentId) {
           // some services doesn't have `environmentId` property. we will skip these so far (I suppose those are internal Rancher services)
           trace(`service id=${s.id} name=${s.name} has no environmentId property, skipping... data=${JSON.stringify(s, null, 4)}`);
@@ -100,9 +109,11 @@ import assert from 'assert';
         }
         info(`discovered new running service, creating monitor for: ${stackName}/${s.name}`);
         const monitor = await initServiceMonitor(s);
-        info(`new monitor up ${monitor}`);
-        monitors.push(monitor);
-        monitor.start();
+        if ( monitor ) {
+          info(`new monitor up ${monitor}`);
+          monitors.push(monitor);
+          monitor.start();
+        }
       }
     }
 
