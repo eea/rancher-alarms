@@ -27,6 +27,7 @@ import assert from 'assert';
   const services = (await rancher.getServices())
     .filter(globalServiceFilterPredicate)
     .filter(runningServicePredicate)
+    .filter(isServiceComplete)
     .filter(s => keys(stacksById).indexOf(s.environmentId) !== -1);
   trace(`loaded services from API\n${JSON.stringify(services, null, 4)}`)
   let systemServicesIds = [] // cache of system services we will ignore
@@ -73,7 +74,8 @@ import assert from 'assert';
 
   async function updateMonitors() {
     const availableServices = (await rancher.getServices())
-      .filter(globalServiceFilterPredicate);
+      .filter(globalServiceFilterPredicate)
+      .filter(isServiceComplete);
     const monitoredServices = pluck(monitors, 'service');
     trace(`updating monitors`);
 
@@ -129,6 +131,19 @@ import assert from 'assert';
       }
     }
   }
+
+  
+  /**
+   * Does the service have a name and an environmentId ?
+   * @param service
+     */
+  function isServiceComplete(service) {
+    if(typeof service === 'undefined') return false;
+    if(typeof service.name === 'undefined') return false;
+    if(typeof stacksById[service.environmentId] === 'undefined') return false;
+    return true;
+  }
+
 
   /**
    * Should we monitor this service?
