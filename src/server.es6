@@ -27,7 +27,6 @@ import assert from 'assert';
   const services = (await rancher.getServices())
     .filter(globalServiceFilterPredicate)
     .filter(runningServicePredicate)
-    .filter(isServiceComplete)
     .filter(s => keys(stacksById).indexOf(s.environmentId) !== -1);
   trace(`loaded services from API\n${JSON.stringify(services, null, 4)}`)
   let systemServicesIds = [] // cache of system services we will ignore
@@ -74,8 +73,7 @@ import assert from 'assert';
 
   async function updateMonitors() {
     const availableServices = (await rancher.getServices())
-      .filter(globalServiceFilterPredicate)
-      .filter(isServiceComplete);
+      .filter(globalServiceFilterPredicate);
     const monitoredServices = pluck(monitors, 'service');
     trace(`updating monitors`);
 
@@ -107,8 +105,9 @@ import assert from 'assert';
             continue;
           }
           // we found new `user` stack, add it to cache
-          stackName = stacksById[stack.id] = stack.name
+               stackName = stacksById[s.environmentId] = stack.name
         }
+        
         info(`discovered new running service, creating monitor for: ${stackName}/${s.name}`);
         const monitor = await initServiceMonitor(s);
         if ( monitor ) {
@@ -130,18 +129,6 @@ import assert from 'assert';
         monitor.stop();
       }
     }
-  }
-
-  
-  /**
-   * Does the service have a name and an environmentId ?
-   * @param service
-     */
-  function isServiceComplete(service) {
-    if(typeof service === 'undefined') return false;
-    if(typeof service.name === 'undefined') return false;
-    if(typeof stacksById[service.environmentId] === 'undefined') return false;
-    return true;
   }
 
 
